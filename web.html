@@ -1,0 +1,361 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Send, ThumbsUp, ThumbsDown, Heart, Star, Sparkles, Zap, Award, Coffee, MessageCircle, TrendingUp, Flame, Eye, Trash2 } from 'lucide-react';
+
+const UNIQUE_SYMBOLS = ['🌟', '🎭', '🎨', '🎪', '🎯', '🎲', '🎸', '🎺', '🎻', '🎬', '🎮', '🎰', '🎳', '🎴', '🎵', '🎶', '🎷', '🎹', '🎼', '🎾', '🎿', '🏀', '🏁', '🏆', '🏈', '🏉', '🏊', '🏋', '🏌', '🏍', '🏎', '🏏', '🏐', '🏑', '🏒', '🏓', '🏔', '🏕', '🏖', '🏗', '🏘', '🏙', '🏚', '🏛', '🏜', '🏝', '🏞', '🏟', '🚀', '🚁', '🚂', '🚃', '🚄', '🚅', '🚆', '🚇', '🚈', '🚉', '🚊', '🚋', '🚌', '🚍', '🚎', '🚏', '🚐', '🚑', '🚒', '🚓', '🚔', '🚕', '🚖', '🚗', '🚘', '🚙', '🚚', '🚛', '🚜', '🚝', '🚞', '🚟', '🚠', '🚡', '🚢', '🚣', '🚤', '🚥', '🚦', '🚧', '🚨', '🚩', '🚪', '🚫', '🚬', '🚭', '🚮', '🚯', '🚰', '🚱', '🚲', '🚳', '🚴', '🚵'];
+
+const REACTION_TYPES = [
+  { icon: ThumbsUp, label: 'Upvote', color: 'text-blue-500', hoverColor: 'hover:bg-blue-50' },
+  { icon: ThumbsDown, label: 'Downvote', color: 'text-gray-500', hoverColor: 'hover:bg-gray-50' },
+  { icon: Heart, label: 'Love', color: 'text-red-500', hoverColor: 'hover:bg-red-50' },
+  { icon: Star, label: 'Star', color: 'text-yellow-500', hoverColor: 'hover:bg-yellow-50' },
+  { icon: Sparkles, label: 'Amazing', color: 'text-purple-500', hoverColor: 'hover:bg-purple-50' },
+  { icon: Flame, label: 'Fire', color: 'text-orange-500', hoverColor: 'hover:bg-orange-50' },
+  { icon: Zap, label: 'Energy', color: 'text-cyan-500', hoverColor: 'hover:bg-cyan-50' },
+  { icon: Award, label: 'Award', color: 'text-green-500', hoverColor: 'hover:bg-green-50' },
+  { icon: Coffee, label: 'Chill', color: 'text-amber-600', hoverColor: 'hover:bg-amber-50' },
+  { icon: TrendingUp, label: 'Trending', color: 'text-indigo-500', hoverColor: 'hover:bg-indigo-50' }
+];
+
+const SAMPLE_POSTS = [
+  "Just discovered an amazing new coffee shop downtown! ☕",
+  "Why do we park in driveways and drive on parkways? 🤔",
+  "Learning to code is like learning a new language. Challenging but rewarding!",
+  "The sunset today was absolutely breathtaking 🌅",
+  "Hot take: Pineapple belongs on pizza 🍕",
+  "Anyone else procrastinating right now? 😅",
+  "Life pro tip: Always keep snacks in your bag",
+  "Just finished an amazing book! Recommendations anyone?",
+  "Why is adulting so hard? Send help! 😂",
+  "Music recommendations? Need new playlist vibes 🎵"
+];
+
+export default function AnonymousSocialFeed() {
+  const [posts, setPosts] = useState([]);
+  const [newPostText, setNewPostText] = useState('');
+  const [mySymbol, setMySymbol] = useState('');
+  const [usedSymbols, setUsedSymbols] = useState(new Set());
+  const [commentingOn, setCommentingOn] = useState(null);
+  const [commentText, setCommentText] = useState('');
+
+  useEffect(() => {
+    const symbol = getUniqueSymbol();
+    setMySymbol(symbol);
+    
+    // Generate initial posts from different "users"
+    const initialPosts = SAMPLE_POSTS.slice(0, 5).map((text, idx) => ({
+      id: Date.now() + idx,
+      text,
+      symbol: getUniqueSymbol(),
+      timestamp: Date.now() - (Math.random() * 3600000),
+      reactions: generateRandomReactions(),
+      comments: [],
+      views: Math.floor(Math.random() * 500) + 50,
+      isMine: false
+    }));
+    
+    setPosts(initialPosts);
+    
+    // Simulate new posts appearing
+    const interval = setInterval(() => {
+      if (Math.random() > 0.6) {
+        addRandomPost();
+      }
+    }, 15000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  const getUniqueSymbol = () => {
+    const availableSymbols = UNIQUE_SYMBOLS.filter(s => !usedSymbols.has(s));
+    if (availableSymbols.length === 0) {
+      return UNIQUE_SYMBOLS[Math.floor(Math.random() * UNIQUE_SYMBOLS.length)];
+    }
+    
+    const symbol = availableSymbols[Math.floor(Math.random() * availableSymbols.length)];
+    setUsedSymbols(prev => new Set([...prev, symbol]));
+    return symbol;
+  };
+
+  const generateRandomReactions = () => {
+    const reactions = {};
+    REACTION_TYPES.forEach(type => {
+      if (Math.random() > 0.5) {
+        reactions[type.label] = Math.floor(Math.random() * 20);
+      }
+    });
+    return reactions;
+  };
+
+  const addRandomPost = () => {
+    const unusedPosts = SAMPLE_POSTS.filter(text => 
+      !posts.some(post => post.text === text)
+    );
+    
+    if (unusedPosts.length > 0) {
+      const newPost = {
+        id: Date.now(),
+        text: unusedPosts[Math.floor(Math.random() * unusedPosts.length)],
+        symbol: getUniqueSymbol(),
+        timestamp: Date.now(),
+        reactions: generateRandomReactions(),
+        comments: [],
+        views: Math.floor(Math.random() * 100) + 10,
+        isMine: false
+      };
+      
+      setPosts(prev => [newPost, ...prev]);
+    }
+  };
+
+  const createPost = () => {
+    if (!newPostText.trim()) return;
+
+    const newPost = {
+      id: Date.now(),
+      text: newPostText,
+      symbol: mySymbol,
+      timestamp: Date.now(),
+      reactions: {},
+      comments: [],
+      views: 1,
+      isMine: true
+    };
+
+    setPosts(prev => [newPost, ...prev]);
+    setNewPostText('');
+  };
+
+  const addReaction = (postId, reactionLabel) => {
+    setPosts(prev => prev.map(post => {
+      if (post.id === postId) {
+        const reactions = { ...post.reactions };
+        reactions[reactionLabel] = (reactions[reactionLabel] || 0) + 1;
+        return { ...post, reactions };
+      }
+      return post;
+    }));
+  };
+
+  const addComment = (postId) => {
+    if (!commentText.trim()) return;
+
+    setPosts(prev => prev.map(post => {
+      if (post.id === postId) {
+        const newComment = {
+          id: Date.now(),
+          text: commentText,
+          symbol: mySymbol,
+          timestamp: Date.now(),
+          reactions: {}
+        };
+        return { ...post, comments: [...post.comments, newComment] };
+      }
+      return post;
+    }));
+
+    setCommentText('');
+    setCommentingOn(null);
+  };
+
+  const addCommentReaction = (postId, commentId, reactionLabel) => {
+    setPosts(prev => prev.map(post => {
+      if (post.id === postId) {
+        const comments = post.comments.map(comment => {
+          if (comment.id === commentId) {
+            const reactions = { ...comment.reactions };
+            reactions[reactionLabel] = (reactions[reactionLabel] || 0) + 1;
+            return { ...comment, reactions };
+          }
+          return comment;
+        });
+        return { ...post, comments };
+      }
+      return post;
+    }));
+  };
+
+  const deletePost = (postId) => {
+    setPosts(prev => prev.filter(post => post.id !== postId));
+  };
+
+  const getTimeAgo = (timestamp) => {
+    const seconds = Math.floor((Date.now() - timestamp) / 1000);
+    if (seconds < 60) return `${seconds}s ago`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-white shadow-md border-b-4 border-indigo-500">
+        <div className="max-w-3xl mx-auto p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                Anonymous Feed
+              </h1>
+              <p className="text-sm text-gray-600">You are <span className="text-2xl">{mySymbol}</span></p>
+            </div>
+            <div className="text-right">
+              <div className="text-xs text-gray-500">Active Users</div>
+              <div className="text-2xl font-bold text-indigo-600">{usedSymbols.size}</div>
+            </div>
+          </div>
+
+          {/* Create Post */}
+          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-4 shadow-lg">
+            <textarea
+              value={newPostText}
+              onChange={(e) => setNewPostText(e.target.value)}
+              placeholder="Share something anonymously... What's on your mind?"
+              className="w-full p-3 border-2 border-indigo-200 rounded-xl focus:outline-none focus:border-indigo-500 resize-none"
+              rows="3"
+            />
+            <div className="flex justify-between items-center mt-2">
+              <div className="text-xs text-gray-500">Post anonymously as {mySymbol}</div>
+              <button
+                onClick={createPost}
+                className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-6 py-2 rounded-full font-semibold transition-all shadow-md"
+              >
+                Post
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Feed */}
+      <div className="max-w-3xl mx-auto p-4 space-y-4">
+        {posts.map(post => (
+          <div key={post.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+            {/* Post Header */}
+            <div className="p-4 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="text-3xl">{post.symbol}</div>
+                  <div>
+                    <div className="font-semibold text-gray-800">Anonymous User</div>
+                    <div className="text-xs text-gray-500 flex items-center gap-2">
+                      <span>{getTimeAgo(post.timestamp)}</span>
+                      <span>•</span>
+                      <Eye className="w-3 h-3" />
+                      <span>{post.views}</span>
+                    </div>
+                  </div>
+                </div>
+                {post.isMine && (
+                  <button
+                    onClick={() => deletePost(post.id)}
+                    className="text-red-500 hover:bg-red-50 p-2 rounded-full transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Post Content */}
+            <div className="p-4">
+              <p className="text-gray-800 text-lg">{post.text}</p>
+            </div>
+
+            {/* Reactions Bar */}
+            <div className="px-4 py-2 border-t border-b border-gray-100 bg-gray-50">
+              <div className="flex flex-wrap gap-2">
+                {REACTION_TYPES.map((reaction, idx) => {
+                  const Icon = reaction.icon;
+                  const count = post.reactions[reaction.label] || 0;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => addReaction(post.id, reaction.label)}
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                        count > 0 ? 'bg-white shadow-sm' : 'bg-white hover:shadow-sm'
+                      } ${reaction.hoverColor}`}
+                      title={reaction.label}
+                    >
+                      <Icon className={`w-4 h-4 ${reaction.color}`} />
+                      {count > 0 && <span className="text-gray-700">{count}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Comments Section */}
+            <div className="p-4 bg-gray-50">
+              <button
+                onClick={() => setCommentingOn(commentingOn === post.id ? null : post.id)}
+                className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium mb-3"
+              >
+                <MessageCircle className="w-5 h-5" />
+                <span>{post.comments.length} Comments</span>
+              </button>
+
+              {/* Comment Input */}
+              {commentingOn === post.id && (
+                <div className="mb-4 flex gap-2">
+                  <input
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addComment(post.id)}
+                    placeholder="Write a comment..."
+                    className="flex-1 px-4 py-2 border-2 border-indigo-200 rounded-full focus:outline-none focus:border-indigo-500"
+                  />
+                  <button
+                    onClick={() => addComment(post.id)}
+                    className="bg-indigo-500 hover:bg-indigo-600 text-white p-2 rounded-full transition-colors"
+                  >
+                    <Send className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
+
+              {/* Comments List */}
+              {post.comments.length > 0 && (
+                <div className="space-y-3">
+                  {post.comments.map(comment => (
+                    <div key={comment.id} className="bg-white rounded-xl p-3 shadow-sm">
+                      <div className="flex items-start gap-2">
+                        <div className="text-2xl">{comment.symbol}</div>
+                        <div className="flex-1">
+                          <div className="text-sm text-gray-500 mb-1">
+                            {getTimeAgo(comment.timestamp)}
+                          </div>
+                          <p className="text-gray-800">{comment.text}</p>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {REACTION_TYPES.slice(0, 5).map((reaction, idx) => {
+                              const Icon = reaction.icon;
+                              const count = comment.reactions[reaction.label] || 0;
+                              return (
+                                <button
+                                  key={idx}
+                                  onClick={() => addCommentReaction(post.id, comment.id, reaction.label)}
+                                  className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
+                                    count > 0 ? 'bg-gray-100' : 'bg-gray-50 hover:bg-gray-100'
+                                  } transition-colors`}
+                                >
+                                  <Icon className={`w-3 h-3 ${reaction.color}`} />
+                                  {count > 0 && <span>{count}</span>}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
